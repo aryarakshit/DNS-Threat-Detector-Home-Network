@@ -11,7 +11,7 @@ Build, train, evaluate, and deploy a production-grade DNS DGA and C2 Threat Dete
 - [x] **Phase 3: Lexical & Information-Theoretic Feature Extractor** - Implement 14 mathematical features and offline `tldextract` engine.
 - [x] **Phase 4: ML Classifier Training & Evaluation Pipeline** - Train Random Forest model, compute cross-validation metrics, serialize to `models/dga_detector.joblib`.
 - [x] **Phase 5: Pi-hole & Zeek Log Parsers & 7-Day Simulator** - Build parsers for Pi-hole and Zeek and generate 140,000 realistic DNS queries.
-- [ ] **Phase 6: Threat Hunter, SOC Dossier Reporting, Runner & Verification** - Implement triage engine, `run_dns_detector.py`, `reports/dns_threat_study_report.md`, and 100% passing test suite.
+- [x] **Phase 6: Threat Hunter, SOC Dossier Reporting, Runner & Verification** - Implement triage engine, `run_dns_detector.py`, `reports/dns_threat_study_report.md`, and 100% passing test suite.
 
 ## Phase Details
 
@@ -92,8 +92,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: Implement `core/threat_hunter.py`, `run_dns_detector.py`, and SOC reporting generator.
-- [ ] 06-02: Implement `tests/` unit test suite and verify 100% pass with pytest and README documentation.
+- [x] 06-01: Implement `core/threat_hunter.py`, `run_dns_detector.py`, and SOC reporting generator.
+- [x] 06-02: Implement `tests/` unit test suite and verify 100% pass with pytest and README documentation.
 
 ## Progress
 
@@ -104,7 +104,7 @@ Plans:
 | 3. Lexical & Information-Theoretic Feature Extractor | 1/1 | Complete | 2026-10-23 |
 | 4. ML Classifier Training & Evaluation Pipeline | 1/1 | Complete | 2026-10-23 |
 | 5. Pi-hole & Zeek Log Parsers & 7-Day Simulator | 1/1 | Complete | 2026-10-23 |
-| 6. Threat Hunter, SOC Dossier Reporting, Runner & Verification | 0/2 | Not started | - |
+| 6. Threat Hunter, SOC Dossier Reporting, Runner & Verification | 2/2 | Complete | 2026-10-23 |
 
 ### Phase 7: Environment Setup and Configuration
 

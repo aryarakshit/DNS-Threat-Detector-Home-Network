@@ -278,24 +278,17 @@ def generate_home_network_logs(
     # Benign High-Entropy Anomaly Domains (trip naive entropy models, but resolve with NOERROR!)
     cdn_high_entropy_domains = [
         "d3g9k8x2p1q4.cloudfront.net",
-        "d1m7b9v4k2q8.cloudfront.net",
         "a8f9d2c1b4e5.spotify.com",
-        "s202610._domainkey.razorpay.com",
-        "k1._domainkey.github.com",
-        "telemetry-x9k12m7p.apple.com",
-        "prod-e8d9c2b1.akamaized.net",
-        "session-b7c4d1e2.fastly.net",
-        "edge-v9x2m4p7.cloudflare-dns.com",
-        "telemetry-hash-9f8e7d6c.microsoft.com"
+        "s202610._domainkey.razorpay.com"
     ]
 
-    # Pre-generate authentic DGA domains for infected hosts
-    iot_necurs = generate_dga_domains("necurs", count=250, seed=101)
-    iot_conficker = generate_dga_domains("conficker", count=250, seed=102)
-    vm_crypto = generate_dga_domains("cryptolocker", count=250, seed=201)
-    vm_qakbot = generate_dga_domains("qakbot", count=250, seed=202)
-    vm_suppobox = generate_dga_domains("suppobox_matsnu", count=250, seed=203)
-    vm_tunneling = [f"c2-data-{hex(rng.getrandbits(48))[2:]}.tunnel-exfil.org" for _ in range(100)]
+    # Pre-generate authentic DGA domain candidate pool (simulating active daily PRNG seeds)
+    iot_necurs = generate_dga_domains("necurs", count=3, seed=101)
+    iot_conficker = generate_dga_domains("conficker", count=4, seed=102)
+    vm_crypto = generate_dga_domains("cryptolocker", count=3, seed=201)
+    vm_qakbot = generate_dga_domains("qakbot", count=3, seed=202)
+    vm_suppobox = generate_dga_domains("suppobox_matsnu", count=3, seed=203)
+    vm_tunneling = ["c2-session-exfil-chunk.tunnel-data.org"]
 
     events: List[DNSQueryEvent] = []
 

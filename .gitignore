@@ -29,5 +29,8 @@ wheels/
 .coverage
 htmlcov/
 
+# GSD Runtime local tooling
+.agents/
+
 # Logs and databases (generated data)
 # Note: we track sample files in data/ and models/ when built
