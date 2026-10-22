@@ -10,7 +10,7 @@ Build, train, evaluate, and deploy a production-grade DNS DGA and C2 Threat Dete
 - [x] **Phase 2: DGA Generators & Tranco Corpus Builder** - Implement 6 DGA algorithms and synthesize 30,000 labeled domains.
 - [x] **Phase 3: Lexical & Information-Theoretic Feature Extractor** - Implement 14 mathematical features and offline `tldextract` engine.
 - [x] **Phase 4: ML Classifier Training & Evaluation Pipeline** - Train Random Forest model, compute cross-validation metrics, serialize to `models/dga_detector.joblib`.
-- [ ] **Phase 5: Pi-hole & Zeek Log Parsers & 7-Day Simulator** - Build parsers for Pi-hole and Zeek and generate 140,000 realistic DNS queries.
+- [x] **Phase 5: Pi-hole & Zeek Log Parsers & 7-Day Simulator** - Build parsers for Pi-hole and Zeek and generate 140,000 realistic DNS queries.
 - [ ] **Phase 6: Threat Hunter, SOC Dossier Reporting, Runner & Verification** - Implement triage engine, `run_dns_detector.py`, `reports/dns_threat_study_report.md`, and 100% passing test suite.
 
 ## Phase Details
@@ -78,7 +78,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 05-01: Implement `core/log_parsers.py` with multi-format log parsers and 7-day traffic generator.
+- [x] 05-01: Implement `core/log_parsers.py` with multi-format log parsers and 7-day traffic generator.
 
 ### Phase 6: Threat Hunter, SOC Dossier Reporting, Runner & Verification
 **Goal**: Implement triage correlation, master runner, SOC report generator, and unit test suite.
@@ -103,7 +103,7 @@ Plans:
 | 2. DGA Generators & Tranco Corpus Builder | 1/1 | Complete | 2026-10-23 |
 | 3. Lexical & Information-Theoretic Feature Extractor | 1/1 | Complete | 2026-10-23 |
 | 4. ML Classifier Training & Evaluation Pipeline | 1/1 | Complete | 2026-10-23 |
-| 5. Pi-hole & Zeek Log Parsers & 7-Day Simulator | 0/1 | Not started | - |
+| 5. Pi-hole & Zeek Log Parsers & 7-Day Simulator | 1/1 | Complete | 2026-10-23 |
 | 6. Threat Hunter, SOC Dossier Reporting, Runner & Verification | 0/2 | Not started | - |
 
 ### Phase 7: Environment Setup and Configuration
