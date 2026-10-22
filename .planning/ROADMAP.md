@@ -8,7 +8,7 @@ Build, train, evaluate, and deploy a production-grade DNS DGA and C2 Threat Dete
 
 - [x] **Phase 1: Environment Setup & Configuration** - Establish directory layout, `requirements.txt`, and `config/detector_config.yaml`.
 - [x] **Phase 2: DGA Generators & Tranco Corpus Builder** - Implement 6 DGA algorithms and synthesize 30,000 labeled domains.
-- [ ] **Phase 3: Lexical & Information-Theoretic Feature Extractor** - Implement 14 mathematical features and offline `tldextract` engine.
+- [x] **Phase 3: Lexical & Information-Theoretic Feature Extractor** - Implement 14 mathematical features and offline `tldextract` engine.
 - [ ] **Phase 4: ML Classifier Training & Evaluation Pipeline** - Train Random Forest model, compute cross-validation metrics, serialize to `models/dga_detector.joblib`.
 - [ ] **Phase 5: Pi-hole & Zeek Log Parsers & 7-Day Simulator** - Build parsers for Pi-hole and Zeek and generate 140,000 realistic DNS queries.
 - [ ] **Phase 6: Threat Hunter, SOC Dossier Reporting, Runner & Verification** - Implement triage engine, `run_dns_detector.py`, `reports/dns_threat_study_report.md`, and 100% passing test suite.
@@ -52,7 +52,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Implement `core/feature_extractor.py` and verify feature extraction across diverse sample domains.
+- [x] 03-01: Implement `core/feature_extractor.py` and verify feature extraction across diverse sample domains.
 
 ### Phase 4: ML Classifier Training & Evaluation Pipeline
 **Goal**: Train Random Forest classifier and serialize model bundle.
@@ -101,7 +101,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Environment Setup & Configuration | 1/1 | Complete | 2026-10-23 |
 | 2. DGA Generators & Tranco Corpus Builder | 1/1 | Complete | 2026-10-23 |
-| 3. Lexical & Information-Theoretic Feature Extractor | 0/1 | Not started | - |
+| 3. Lexical & Information-Theoretic Feature Extractor | 1/1 | Complete | 2026-10-23 |
 | 4. ML Classifier Training & Evaluation Pipeline | 0/1 | Not started | - |
 | 5. Pi-hole & Zeek Log Parsers & 7-Day Simulator | 0/1 | Not started | - |
 | 6. Threat Hunter, SOC Dossier Reporting, Runner & Verification | 0/2 | Not started | - |
