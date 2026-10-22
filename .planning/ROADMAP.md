@@ -9,7 +9,7 @@ Build, train, evaluate, and deploy a production-grade DNS DGA and C2 Threat Dete
 - [x] **Phase 1: Environment Setup & Configuration** - Establish directory layout, `requirements.txt`, and `config/detector_config.yaml`.
 - [x] **Phase 2: DGA Generators & Tranco Corpus Builder** - Implement 6 DGA algorithms and synthesize 30,000 labeled domains.
 - [x] **Phase 3: Lexical & Information-Theoretic Feature Extractor** - Implement 14 mathematical features and offline `tldextract` engine.
-- [ ] **Phase 4: ML Classifier Training & Evaluation Pipeline** - Train Random Forest model, compute cross-validation metrics, serialize to `models/dga_detector.joblib`.
+- [x] **Phase 4: ML Classifier Training & Evaluation Pipeline** - Train Random Forest model, compute cross-validation metrics, serialize to `models/dga_detector.joblib`.
 - [ ] **Phase 5: Pi-hole & Zeek Log Parsers & 7-Day Simulator** - Build parsers for Pi-hole and Zeek and generate 140,000 realistic DNS queries.
 - [ ] **Phase 6: Threat Hunter, SOC Dossier Reporting, Runner & Verification** - Implement triage engine, `run_dns_detector.py`, `reports/dns_threat_study_report.md`, and 100% passing test suite.
 
@@ -65,7 +65,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: Implement `core/model_trainer.py`, train model, verify metric thresholds, and serialize `models/dga_detector.joblib`.
+- [x] 04-01: Implement `core/model_trainer.py`, train model, verify metric thresholds, and serialize `models/dga_detector.joblib`.
 
 ### Phase 5: Pi-hole & Zeek Log Parsers & 7-Day Simulator
 **Goal**: Ingest real network logs and simulate 7-day home DNS traffic.
@@ -102,7 +102,7 @@ Plans:
 | 1. Environment Setup & Configuration | 1/1 | Complete | 2026-10-23 |
 | 2. DGA Generators & Tranco Corpus Builder | 1/1 | Complete | 2026-10-23 |
 | 3. Lexical & Information-Theoretic Feature Extractor | 1/1 | Complete | 2026-10-23 |
-| 4. ML Classifier Training & Evaluation Pipeline | 0/1 | Not started | - |
+| 4. ML Classifier Training & Evaluation Pipeline | 1/1 | Complete | 2026-10-23 |
 | 5. Pi-hole & Zeek Log Parsers & 7-Day Simulator | 0/1 | Not started | - |
 | 6. Threat Hunter, SOC Dossier Reporting, Runner & Verification | 0/2 | Not started | - |
 

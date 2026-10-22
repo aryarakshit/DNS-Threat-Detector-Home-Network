@@ -1,0 +1,96 @@
+{
+  "overall_metrics": {
+    "precision": 99.77,
+    "recall": 99.53,
+    "f1_score": 99.65,
+    "roc_auc": 0.99989,
+    "specificity": 99.77,
+    "false_positive_rate": 0.23
+  },
+  "confusion_matrix": {
+    "tn": 2993,
+    "fp": 7,
+    "fn": 14,
+    "tp": 2986
+  },
+  "cv_metrics": {
+    "cv_f1_mean": 0.9984989047904909,
+    "cv_f1_std": 0.000550685115569563,
+    "cv_precision_mean": 0.9990827065932336,
+    "cv_recall_mean": 0.9979166666666666,
+    "cv_roc_auc_mean": 0.9999737673611111
+  },
+  "per_family_recall": {
+    "cryptolocker": 100.0,
+    "necurs": 100.0,
+    "qakbot": 100.0,
+    "conficker": 99.59,
+    "bamital": 100.0,
+    "suppobox_matsnu": 97.7
+  },
+  "feature_importance_ranking": [
+    {
+      "feature": "trigram_log_likelihood",
+      "importance": 0.25627
+    },
+    {
+      "feature": "length",
+      "importance": 0.22602
+    },
+    {
+      "feature": "bigram_log_likelihood",
+      "importance": 0.14046
+    },
+    {
+      "feature": "shannon_entropy",
+      "importance": 0.11014
+    },
+    {
+      "feature": "rare_bigram_ratio",
+      "importance": 0.08276
+    },
+    {
+      "feature": "unique_char_ratio",
+      "importance": 0.04375
+    },
+    {
+      "feature": "max_consonant_streak",
+      "importance": 0.03898
+    },
+    {
+      "feature": "vowel_ratio",
+      "importance": 0.03049
+    },
+    {
+      "feature": "normalized_entropy",
+      "importance": 0.02473
+    },
+    {
+      "feature": "transition_frequency",
+      "importance": 0.01697
+    },
+    {
+      "feature": "consonant_ratio",
+      "importance": 0.01646
+    },
+    {
+      "feature": "hex_ratio",
+      "importance": 0.00601
+    },
+    {
+      "feature": "digit_ratio",
+      "importance": 0.00382
+    },
+    {
+      "feature": "max_digit_streak",
+      "importance": 0.00313
+    }
+  ],
+  "test_sample_size": 6000,
+  "train_sample_size": 24000,
+  "hyperparameters": {
+    "n_estimators": 200,
+    "max_depth": 18,
+    "random_seed": 42
+  }
+}
