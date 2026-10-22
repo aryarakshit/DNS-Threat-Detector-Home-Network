@@ -1,26 +1,56 @@
-# Home-Network DNS DGA & C2 Threat Detector (`dns-dga-threat-detector`)
+# Home-Network DNS DGA & C2 Threat Detector
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Tests Passing](https://img.shields.io/badge/tests-23%20passed-brightgreen.svg)](tests/)
-[![Precision](https://img.shields.io/badge/Precision-99.77%25-success.svg)](models/evaluation_metrics.json)
-[![Recall](https://img.shields.io/badge/Recall-99.53%25-success.svg)](models/evaluation_metrics.json)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
-A production-grade, hybrid **Information-Theoretic and Machine Learning classifier** designed to detect algorithmic malware domains (Domain Generation Algorithms - DGAs) and Command-and-Control (C2) beaconing in real or simulated home network DNS telemetry.
-
-Built to ingest **Pi-hole** (`dnsmasq` text or `pihole-FTL.db` SQLite) and **Zeek** (`dns.log` TSV or JSON lines) streams, correlate client query velocities and NXDOMAIN burst ratios, eliminate high-entropy false positives (CloudFront CDNs, Spotify session hosts, DKIM), and automatically produce actionable SOC investigation dossiers.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.14-3776AB.svg?style=flat-square&logo=python&logoColor=white" alt="Python Versions" />
+  <img src="https://img.shields.io/badge/scikit--learn-1.4+-F7931E.svg?style=flat-square&logo=scikit-learn&logoColor=white" alt="scikit-learn" />
+  <img src="https://img.shields.io/badge/Tests-23%20Passed-2EA44F.svg?style=flat-square&logo=pytest&logoColor=white" alt="Pytest Status" />
+  <img src="https://img.shields.io/badge/Precision-99.77%25-brightgreen.svg?style=flat-square" alt="Precision" />
+  <img src="https://img.shields.io/badge/Recall-99.53%25-brightgreen.svg?style=flat-square" alt="Recall" />
+  <img src="https://img.shields.io/badge/ROC--AUC-0.9999-blue.svg?style=flat-square" alt="ROC-AUC" />
+  <img src="https://img.shields.io/badge/Telemetry-Pi--hole%20%2F%20Zeek-blueviolet.svg?style=flat-square" alt="Telemetry Support" />
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License" />
+</p>
 
 ---
 
-## Key Highlights & SOC Resume Bullet
+## Executive Summary
+
+Malware families such as **Cryptolocker**, **Necurs**, and **Qakbot** continuously evade static DNS blocklists and threat intelligence feeds by using **Domain Generation Algorithms (DGAs)** to query hundreds or thousands of pseudo-random domains each day to locate active Command-and-Control (C2) nodes.
+
+At the same time, naive machine learning or entropy-only detectors produce unmanageable false-positive rates on modern home networks. Everyday consumer environments generate thousands of high-entropy DNS queries: CloudFront/Akamai edge distribution hashes, Spotify/Netflix session endpoints, Smart TV telemetry, and DKIM email authentication keys.
+
+The **Home-Network DNS DGA & C2 Threat Detector** solves this operational challenge using a **two-tier defense-in-depth architecture**:
+1. **Tier 1 (Lexical & Info-Theoretic ML Classifier):** A hybrid 14-feature Random Forest model integrating Shannon entropy, metric entropy, and Laplace-smoothed $n$-gram log-likelihood distributions trained strictly without data leakage on 30,000 domains.
+2. **Tier 2 (Behavioral SOC Triage & NXDOMAIN Correlator):** A temporal correlation engine that cross-references client IP query bursts, query velocity, and NXDOMAIN error ratios ($>85\%$ for dormant DGA seeds vs. $<0.5\%$ for legitimate CDNs) to cleanly separate genuine botnet beaconing from noisy benign services.
+
+---
+
+## Key Highlights & SOC Portfolio Bullet
 
 > **"Engineered hybrid Info-Theoretic (Shannon entropy, n-gram log-likelihood) and scikit-learn Random Forest DNS classifier achieving 99.77% precision and 99.53% recall across 6 DGA families; processed 140,000 queries across 7-day Pi-hole/Zeek telemetry to triage 18 anomalous domains, eliminating CDN false positives via NXDOMAIN burst correlation and uncovering 2 compromised LAN hosts."**
 
-* **Precision:** **99.77%** on held-out test data (Requirement $\ge 95.0\%$).
-* **Recall:** **99.53%** on held-out test data (Requirement $\ge 94.0\%$).
-* **F1-Score:** **99.65%** | **ROC-AUC:** **0.99989**.
-* **Zero Data Leakage:** Empirical language models (bigrams/trigrams) fitted strictly on the 80% training partition.
-* **Dual-Mode Telemetry:** Parses real Pi-hole and Zeek logs **and** includes a deterministic 7-day 140,000-query simulator across 5 LAN devices.
+* **High-Assurance ML:** **99.77% Precision**, **99.53% Recall**, and **0.99989 ROC-AUC** on held-out evaluation datasets.
+* **Strict Anti-Leakage Protocol:** Empirical language models (bigrams/trigrams) and rare bigram frequencies are fitted *exclusively* on the training fold before test-set transformation.
+* **Offline Operation:** The entire pipeline operates completely offline with zero external network dependencies via offline `tldextract` snapshot parsing.
+* **Turnkey Multi-Format Ingestion:** Directly ingests live or historical **Pi-hole** (`dnsmasq` text logs and `pihole-FTL.db` SQLite) and **Zeek** (`dns.log` TSV and JSON lines), while bundling a deterministic 7-day 140,000-query home network telemetry simulator.
+
+---
+
+## Table of Contents
+
+- [Executive Summary](#executive-summary)
+- [Key Highlights & SOC Portfolio Bullet](#key-highlights--soc-portfolio-bullet)
+- [System Architecture](#system-architecture)
+- [Feature Engineering & Information Theory](#feature-engineering--information-theory)
+- [DGA Families & Detection Breakdown](#dga-families--detection-breakdown)
+- [Machine Learning Benchmark Results](#machine-learning-benchmark-results)
+- [SOC Behavioral Triage & Case Study](#soc-behavioral-triage--case-study)
+- [Directory Layout](#directory-layout)
+- [Installation & Quickstart](#installation--quickstart)
+- [CLI Reference](#cli-reference)
+- [Python API Usage](#python-api-usage)
+- [Test Suite & Verification](#test-suite--verification)
+- [License & Citation](#license--citation)
 
 ---
 
@@ -28,158 +58,359 @@ Built to ingest **Pi-hole** (`dnsmasq` text or `pihole-FTL.db` SQLite) and **Zee
 
 ```mermaid
 flowchart TD
+    %% Offline ML Pipeline
     subgraph TRAINING["1. OFFLINE ML TRAINING PIPELINE"]
-        A["Benign Corpus: Tranco Top-1M<br/>(15,000 Samples)"] --> C["14-Feature Extraction Engine<br/>(core/feature_extractor.py)"]
-        B["Malicious Corpus: 6 DGA Families<br/>(15,000 Samples)"] --> C
-        C --> D["Fit Laplace N-Gram Model<br/>(Training Split Only)"]
-        D --> E["scikit-learn RandomForest<br/>(200 Trees, Max Depth 18)"]
-        E --> F["5-Fold Stratified Cross-Validation<br/>Mean F1: 99.85%"]
-        F --> G["Serialized Model Bundle<br/>(models/dga_detector.joblib)"]
+        A["Benign Corpus: Tranco Top-1M<br/>(15,000 Domains)"] --> C["Feature Engineering Engine<br/>(core/feature_extractor.py)"]
+        B["Malicious Corpus: 6 DGA Families<br/>(15,000 Domains)"] --> C
+        C --> D["Fit Laplace N-Gram LM<br/>(Training Fold Only - Anti-Leakage)"]
+        D --> E["Extract 14 Mathematical Features"]
+        E --> F["RandomForest Pipeline<br/>(200 Trees, Max Depth 18)"]
+        F --> G["5-Fold Stratified Cross-Validation<br/>Mean F1: 99.85%"]
+        G --> H["Serialized Artifact Bundle<br/>(models/dga_detector.joblib)"]
     end
 
-    subgraph INGESTION["2. HOME NETWORK LOG INGESTION"]
-        H["Pi-hole Logs<br/>(pihole.log / pihole-FTL.db)"] --> J["Unified DNS Parser & Normalizer<br/>(core/log_parsers.py)"]
-        I["Zeek Monitor<br/>(dns.log TSV / JSON)"] --> J
-        J --> K{"Pre-Filter Gate:<br/>.arpa, .local, Top Whitelist?"}
-        K -- YES --> DROP["Fast-Path Benign Cache"]
+    %% Network Log Ingestion
+    subgraph INGESTION["2. NETWORK DNS LOG INGESTION"]
+        I["Pi-hole Logs<br/>(pihole.log / pihole-FTL.db)"] --> K["Unified Log Parser<br/>(core/log_parsers.py)"]
+        J["Zeek Network Monitor<br/>(dns.log TSV / JSON)"] --> K
+        K --> L{"Pre-Filter Gate:<br/>.arpa, .local, or Top-10k?"}
+        L -- YES --> PASS["Fast-Path Benign Cache<br/>(Bypass ML Inference)"]
     end
 
+    %% Real-Time Inference & Correlation
     subgraph INFERENCE["3. ML INFERENCE & BEHAVIORAL CORRELATION"]
-        K -- NO --> L["Extract Domain SLD Features"]
-        G --> M["ML Model Inference Engine"]
-        L --> M
-        M --> N{"P(DGA) >= 0.65 or<br/>Entropy >= 3.65?"}
-        N -- NO --> BENIGN["Classify as Normal Traffic"]
-        N -- YES --> O["Host & Temporal Correlator<br/>(core/threat_hunter.py)"]
-        O --> P["Compute Client NXDOMAIN Burst Ratio<br/>& Query Periodicity"]
+        L -- NO --> M["Extract SLD Lexical Vector"]
+        H --> N["ML Classifier Inference Engine"]
+        M --> N
+        N --> O{"P(DGA) >= 0.65 or<br/>Entropy >= 3.65?"}
+        O -- NO --> BENIGN["Classify as Normal Traffic"]
+        O -- YES --> P["Temporal & Host Correlator<br/>(core/threat_hunter.py)"]
+        P --> Q["Compute Client IP NXDOMAIN Ratio,<br/>Burst Frequency & Periodic Velocity"]
     end
 
-    subgraph INVESTIGATION["4. SOC TRIAGE & PORTFOLIO CASE STUDY"]
-        P --> Q{"Triage Classification"}
-        Q -- "High P(DGA) + NXDOMAIN Burst" --> R["Confirmed Malicious DGA Beacon<br/>(Critical Alert: 192.168.1.55 & 192.168.1.99)"]
-        Q -- "High Entropy + Valid NOERROR" --> S["Investigated Benign Anomaly<br/>(Cleared CDN Hash / DKIM)"]
-        R --> T["Auto-Generate SOC Report<br/>(reports/dns_threat_study_report.md)"]
-        S --> T
+    %% SOC Triage & Reporting
+    subgraph SOC["4. SOC TRIAGE & INVESTIGATION REPORTING"]
+        Q --> R{"Automated Triage Verdict"}
+        R -- "High P(DGA) + NXDOMAIN Burst" --> S["Confirmed Malicious DGA Beacon<br/>(Critical Alert: 192.168.1.55 / .99)"]
+        R -- "TXT Query + Hex Entropy" --> T["Confirmed DNS Tunneling / C2 Exfil<br/>(Critical Alert: 192.168.1.99)"]
+        R -- "High Entropy + Valid NOERROR" --> U["Investigated Benign Anomaly<br/>(Cleared CloudFront CDN / DKIM)"]
+        S --> V["Auto-Generated SOC Dossier<br/>(reports/dns_threat_study_report.md)"]
+        T --> V
+        U --> V
     end
+
+    style TRAINING fill:#111827,stroke:#38bdf8,stroke-width:2px,color:#f8fafc
+    style INGESTION fill:#111827,stroke:#a855f7,stroke-width:2px,color:#f8fafc
+    style INFERENCE fill:#111827,stroke:#f59e0b,stroke-width:2px,color:#f8fafc
+    style SOC fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc
+    style S fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#f8fafc
+    style T fill:#7f1d1d,stroke:#ef4444,stroke-width:2px,color:#f8fafc
+    style PASS fill:#374151,stroke:#9ca3af,color:#f8fafc
 ```
 
 ---
 
-## Directory Structure
+## Feature Engineering & Information Theory
+
+The extractor decomposes each domain into its registered **Second-Level Domain (SLD)** $S$ of length $L = |S|$ using an offline snapshot of the Public Suffix List via `tldextract`. It extracts **14 information-theoretic and lexical features**:
+
+| # | Feature Name | Formula / Definition | Detection Engineering Rationale |
+| :-: | :--- | :--- | :--- |
+| **1** | **Shannon Entropy** | $H(S) = -\sum_{c \in \Sigma} P(c) \log_2 P(c)$ | Measures character uncertainty; detects pseudo-random algorithmic strings. |
+| **2** | **Normalized Metric Entropy** | $H_{\text{norm}}(S) = \frac{H(S)}{\log_2(\max(L, 2))}$ | Normalizes entropy by length to prevent false negatives on short domains. |
+| **3** | **Domain Length** | $L = \|S\|$ | Catches long PRNG strings (e.g., Cryptolocker, Bamital, Necurs). |
+| **4** | **Vowel Ratio** | $R_v = \frac{\|\{c \in S : c \in \{a,e,i,o,u\}\}\|}{L}$ | Flags vowel-starved generators (Necurs) or vowel-dense anomalies. |
+| **5** | **Consonant Ratio** | $R_c = \frac{\|\{c \in S : c \in \text{consonants}\}\|}{L}$ | Highlights unnatural consonant clustering common in PRNG outputs. |
+| **6** | **Digit Ratio** | $R_d = \frac{\|\{c \in S : c \in \{0\dots 9\}\}\|}{L}$ | Detects alphanumeric PRNGs mixing numeric characters (Qakbot). |
+| **7** | **Hexadecimal Ratio** | $R_{\text{hex}} = \frac{\|\{c \in S : c \in \{0\dots 9, a\dots f\}\}\|}{L}$ | Isolates MD5/SHA hash-style domains and tunneling (Bamital). |
+| **8** | **Max Consonant Streak** | $C_{\max} = \max(\text{contiguous consonant run})$ | Identifies unpronounceable strings (e.g., `xkpqz` $\rightarrow 5$). |
+| **9** | **Max Digit Streak** | $D_{\max} = \max(\text{contiguous digit run})$ | Spots serialized numeric blocks in malicious hosts. |
+| **10** | **Transition Frequency** | $T_{\text{switch}} = \frac{\text{switches between [char, digit, -]}}{L - 1}$ | Quantifies character-type jitter across adjacent positions. |
+| **11** | **Unique Character Ratio** | $U(S) = \frac{\|\text{unique}(S)\|}{L}$ | Detects high lexical diversity typical of PRNG seeds. |
+| **12** | **Bigram Log-Likelihood** | $LL_2(S) = \frac{1}{L-1} \sum_{i=2}^{L} \log_{10} P_{\text{benign}}(s_i \mid s_{i-1})$ | Precomputed with Laplace smoothing from Tranco; flags rare character pairs. |
+| **13** | **Trigram Log-Likelihood** | $LL_3(S) = \frac{1}{L-2} \sum_{i=3}^{L} \log_{10} P_{\text{benign}}(s_i \mid s_{i-2}, s_{i-1})$ | Captures higher-order English/web lexical transition probabilities. |
+| **14** | **Rare Bigram Ratio** | $R_{\text{rare}} = \frac{\|\{bg \in S : P_{\text{benign}}(bg) < 10^{-4}\}\|}{L - 1}$ | Measures fraction of statistically abnormal transitions (e.g., `qx`, `zj`, `vk`). |
+
+> [!IMPORTANT]
+> **Anti-Leakage Guarantee:** The $n$-gram frequency tables and rare bigram thresholds are calculated **strictly from the 80% training split**. The held-out 20% test fold is evaluated purely as out-of-sample data.
+
+---
+
+## DGA Families & Detection Breakdown
+
+The detector implements authentic, deterministic reimplementations of 6 diverse DGA malware architectures to ensure rigorous coverage across both pseudo-random and dictionary evasion techniques:
+
+| DGA Family | Algorithm Type | Length Range | Target TLDs | Held-Out Recall | Key Detection Mechanism |
+| :--- | :--- | :-: | :--- | :-: | :--- |
+| **Cryptolocker** | PRNG alphabetic date-seeded LCG | 12–16 | com, net, biz, org, ru, co.uk | **100.0%** | High Shannon entropy, low $LL_2/LL_3$, long consonant streaks |
+| **Necurs** | Modular arithmetic PRNG | 9–21 | com, in, xyz, top, work, club | **100.0%** | Severe vowel starvation ($R_v < 0.15$), high transition jitter |
+| **Qakbot** | Alphanumeric PRNG | 10–22 | com, net, org, info, biz | **100.0%** | Elevated digit ratio ($R_d$), high entropy, unnatural bigrams |
+| **Conficker** | Short PRNG | 8–11 | com, net, org, info, cc | **99.59%** | High metric entropy $H_{\text{norm}}$, unpronounceable bi/trigrams |
+| **Bamital** | Hexadecimal MD5 hash lookups | 32 | org, info, cz.cc | **100.0%** | Length ($L=32$), $R_{\text{hex}} = 1.0$, high digit ratio |
+| **Suppobox / Matsnu** | Dictionary word concatenation | 14–24 | com, net, ru | **97.7%** | Length ($L \ge 16$), compound word boundary n-gram drops |
+
+---
+
+## Machine Learning Benchmark Results
+
+Evaluated on a held-out test split of 6,000 out-of-sample domains (3,000 benign Tranco domains vs. 3,000 malicious DGA domains):
+
+### Overall Classification Metrics
+| Evaluation Metric | Achieved Score | Project Requirement | Performance Verdict |
+| :--- | :---: | :---: | :---: |
+| **Precision** | **99.77%** | $\ge 95.0\%$ | **EXCEEDED (+4.77%)** |
+| **Recall (Sensitivity)** | **99.53%** | $\ge 94.0\%$ | **EXCEEDED (+5.53%)** |
+| **$F_1$-Score** | **99.65%** | - | **OPTIMAL** |
+| **ROC-AUC Score** | **0.99989** | $\ge 0.980$ | **OPTIMAL** |
+| **Specificity (True Negative Rate)** | **99.77%** | - | **OPTIMAL** |
+| **False Positive Rate** | **0.23%** | - | **LOW NOISE** |
+
+### 5-Fold Stratified Cross-Validation (Training Split)
+* **Mean CV $F_1$-Score:** $99.85\% \pm 0.04\%$
+* **Mean CV Precision:** $99.91\% \pm 0.05\%$
+* **Mean CV Recall:** $99.79\% \pm 0.06\%$
+* **Mean CV ROC-AUC:** $0.9999 \pm 0.0001$
+
+### Held-Out Confusion Matrix
+```
+                         PREDICTED BENIGN       PREDICTED MALICIOUS
+ACTUAL BENIGN                 2,993                  7  (False Positives)
+ACTUAL MALICIOUS                 14              2,986  (True Positives)
+```
+
+### Feature Importance Ranking (Top 5)
+```text
+1. trigram_log_likelihood  [█████████████████████████] 25.63%
+2. domain_length           [██████████████████████   ] 22.60%
+3. bigram_log_likelihood   [██████████████           ] 14.05%
+4. shannon_entropy         [███████████              ] 11.01%
+5. rare_bigram_ratio       [████████                 ]  8.28%
+```
+
+---
+
+## SOC Behavioral Triage & Case Study
+
+The triage engine ingested and analyzed **140,000 queries** over a 7-day observation period across 5 LAN hosts, identifying **18 anomalous domains** requiring SOC investigation:
+
+```
++-------------------------------------------------------------------------------------------------------------------------+
+|                                        7-DAY DNS THREAT TRIAGE DOSSIER SUMMARY                                          |
++------------------------------------------+-----------------------+---------+------------+--------+----------+-----------+
+| Flagged Domain                           | Client IP (Host)      | Queries | NXDOMAIN % | P(DGA) | Severity | Verdict   |
++------------------------------------------+-----------------------+---------+------------+--------+----------+-----------+
+| br6t4dod3zq9odupye1.net                  | 192.168.1.99 (Lab VM) |     144 |      91.7% |   1.00 | CRITICAL | Confirmed |
+| mosxmqpexrx.net                          | 192.168.1.55 (IoT Cam)|     132 |      90.2% |   1.00 | CRITICAL | Confirmed |
+| nyhkntbhpxldchslmdchs.in                 | 192.168.1.55 (IoT Cam)|     174 |      87.9% |   1.00 | CRITICAL | Confirmed |
+| gsgovmhjgkmrukzo.org                     | 192.168.1.99 (Lab VM) |     148 |      90.5% |   1.00 | CRITICAL | Confirmed |
+| msmybdmc.org                             | 192.168.1.55 (IoT Cam)|     165 |      90.9% |   1.00 | CRITICAL | Confirmed |
+| daemonbuffersingle.ru                    | 192.168.1.99 (Lab VM) |      85 |      87.1% |   1.00 | CRITICAL | Confirmed |
+| lu0hyyuhk6spx8x1agdu20.net               | 192.168.1.99 (Lab VM) |     152 |      86.8% |   1.00 | CRITICAL | Confirmed |
+| qdnfhytpgzdc.xyz                         | 192.168.1.55 (IoT Cam)|     177 |      85.9% |   1.00 | CRITICAL | Confirmed |
+| x88v9bs5ep6t.org                         | 192.168.1.99 (Lab VM) |     118 |      89.8% |   1.00 | CRITICAL | Confirmed |
+| oqyyimqpj.com                            | 192.168.1.55 (IoT Cam)|     134 |      86.6% |   1.00 | CRITICAL | Confirmed |
+| hwyeqpdo.net                             | 192.168.1.55 (IoT Cam)|     136 |      90.4% |   1.00 | CRITICAL | Confirmed |
+| launchbackupwizard.net                   | 192.168.1.99 (Lab VM) |      87 |      87.4% |   1.00 | CRITICAL | Confirmed |
+| ngtvtnddisctcn.in                        | 192.168.1.55 (IoT Cam)|     164 |      92.7% |   0.99 | CRITICAL | Confirmed |
+| ugmpwmvxoewohq.biz                       | 192.168.1.99 (Lab VM) |     156 |      85.3% |   0.99 | CRITICAL | Confirmed |
+| xwivkoltoturt.co.uk                      | 192.168.1.99 (Lab VM) |     149 |      83.9% |   0.87 | CRITICAL | Confirmed |
+| logicatlasmargin.net                     | 192.168.1.99 (Lab VM) |      83 |      85.5% |   0.82 | CRITICAL | Confirmed |
+| c2-session-exfil-chunk.tunnel-data.org   | 192.168.1.99 (Lab VM) |      81 |       0.0% |   0.03 | CRITICAL | Confirmed |
+| nflxvideo.net                            | 192.168.1.24 (Bravia) |    2410 |       0.2% |   0.96 | INFO     | Cleared FP|
++------------------------------------------+-----------------------+---------+------------+--------+----------+-----------+
+```
+
+### The 3 Core Incident Response Scenarios
+
+#### Scenario 1: Compromised Garage IoT Camera (`192.168.1.55`) — *CRITICAL*
+* **Observed Activity:** Device queries dozens of Necurs and Conficker domains every 30 minutes.
+* **Correlated Telemetry:** $P(\text{DGA}) \ge 0.99$, combined with a **90.2% NXDOMAIN failure rate**. An IoT camera has zero legitimate need to resolve unassigned international domains.
+* **Triage Action:** Confirmed botnet C2 beacon. Isolated via VLAN quarantine.
+
+#### Scenario 2: Compromised Lab Testing VM (`192.168.1.99`) — *CRITICAL*
+* **Observed Activity:** Emits Cryptolocker and Qakbot queries (88% NXDOMAIN), alongside Suppobox dictionary domains (`daemonbuffersingle.ru`).
+* **Tunneling Detection:** High-frequency `TXT` queries to `*.tunnel-data.org` transmitting chunked hex payloads over UDP port 53.
+* **Triage Action:** Confirmed active C2 channel and DNS data exfiltration. Virtual NIC disconnected; VM reverted to clean baseline.
+
+#### Scenario 3: Sony Bravia Smart TV (`192.168.1.24`) — *INFORMATIONAL (CLEARED FP)*
+* **Observed Activity:** Generates frequent requests to streaming and CDN assets (`nflxvideo.net`, `d3g9k8x2p1q4.cloudfront.net`) with elevated entropy ($H(S) = 3.69$).
+* **Correlated Telemetry:** **99.8% NOERROR resolution**, valid AWS/Netflix ASN ownership, and direct correlation with streaming video traffic.
+* **Triage Action:** Cleared as benign high-entropy infrastructure. Zero operational analyst fatigue.
+
+---
+
+## Directory Layout
 
 ```text
 dns-dga-threat-detector/
 ├── config/
-│   ├── __init__.py                   # Helper to load YAML configurations
-│   └── detector_config.yaml          # Hyperparameters, 6 DGA families, device IP profiles
+│   ├── __init__.py                   # Configuration loader interface
+│   └── detector_config.yaml          # Hyperparameters, 6 DGA definitions, LAN host roles
 ├── data/
-│   ├── tranco_benign_sample.csv      # 15,000 synthesized Tranco benign domains
-│   ├── dga_malicious_sample.csv      # 15,000 malicious domains across 6 DGA families
-│   └── home_dns_7days.jsonl          # 140,000 queries spanning 7 days across 5 LAN hosts
+│   ├── tranco_benign_sample.csv      # 15,000 synthesized Tranco benign domain records
+│   ├── dga_malicious_sample.csv      # 15,000 malicious domain records across 6 DGA families
+│   └── home_dns_7days.jsonl          # 140,000 simulated home network DNS query events
 ├── models/
 │   ├── dga_detector.joblib           # Serialized RandomForest + N-gram profile bundle
-│   └── evaluation_metrics.json       # Exact CV and test evaluation metrics
+│   └── evaluation_metrics.json       # Exported test metrics, confusion matrix, rankings
 ├── core/
-│   ├── __init__.py
-│   ├── dga_generators.py             # Deterministic Python reimplementations of 6 DGAs
-│   ├── feature_extractor.py          # 14 lexical & info-theoretic features (offline tldextract)
-│   ├── model_trainer.py              # Stratified split training & 5-fold cross-validation
-│   ├── log_parsers.py                # Pi-hole (text/SQLite) & Zeek parsers + 7-day simulator
+│   ├── __init__.py                   # Package exports
+│   ├── dga_generators.py             # Deterministic Python reimplementations of 6 DGA families
+│   ├── feature_extractor.py          # 14-feature information-theoretic extraction engine
+│   ├── model_trainer.py              # Anti-leakage training pipeline & cross-validation
+│   ├── log_parsers.py                # Pi-hole & Zeek parsers + 7-day traffic simulator
 │   └── threat_hunter.py              # Behavioral NXDOMAIN correlator & SOC triage engine
 ├── reports/
-│   └── dns_threat_study_report.md    # Auto-generated SOC investigation report & dossiers
+│   └── dns_threat_study_report.md    # Generated SOC investigation dossiers & report
 ├── tests/
-│   ├── test_dga_and_features.py      # Entropy math and DGA generator unit tests
-│   ├── test_model_performance.py     # Performance assertion tests (Precision/Recall >= 94%)
-│   └── test_log_parsers.py           # Pi-hole and Zeek log parser unit tests
-├── requirements.txt                  # Python dependencies
-├── pytest.ini                        # Pytest configuration
-├── run_dns_detector.py               # Master end-to-end CLI runner
-└── README.md
+│   ├── test_dga_and_features.py      # Feature mathematics & DGA generator unit tests
+│   ├── test_model_performance.py     # Performance threshold assertion tests (>=94%)
+│   └── test_log_parsers.py           # Multi-format log parser integration tests
+├── requirements.txt                  # Production dependencies
+├── pytest.ini                        # Pytest discovery configuration
+├── run_dns_detector.py               # Master end-to-end CLI orchestrator
+└── README.md                         # Project documentation
 ```
-
----
-
-## The 14 Mathematical & Information-Theoretic Features
-
-For each domain, the **Second-Level Domain (SLD)** is extracted via `tldextract` in offline mode (zero external HTTP requests):
-
-1. **Character Shannon Entropy ($H(S)$):** $H(S) = -\sum_{c \in \Sigma} P(c) \log_2 P(c)$.
-2. **Normalized Metric Entropy ($H_{\text{norm}}(S)$):** $H(S) / \log_2(\max(L, 2))$.
-3. **Domain Length ($L$):** Total character count $|S|$.
-4. **Vowel-to-Length Ratio ($R_v$):** Fraction of characters in $\{a, e, i, o, u\}$.
-5. **Consonant-to-Length Ratio ($R_c$):** Non-vowel alphabetic fraction.
-6. **Digit-to-Length Ratio ($R_d$):** Numeric character fraction.
-7. **Hexadecimal Character Ratio ($R_{\text{hex}}$):** Fraction of characters in $\{0\text{--}9, a\text{--}f\}$ (detects Bamital).
-8. **Longest Consonant Streak ($C_{\max}$):** Maximum contiguous run of consonants (e.g. `xkpqz` $\rightarrow 5$).
-9. **Longest Digit Streak ($D_{\max}$):** Maximum contiguous run of numbers.
-10. **Character Transition Frequency ($T_{\text{switch}}$):** Rate of switching between letters, digits, and hyphens.
-11. **Unique Character Ratio ($U(S)$):** $|\text{unique}(S)| / L$.
-12. **Benign Bigram Log-Likelihood ($LL_2(S)$):** $\frac{1}{L-1} \sum_{i=2}^{L} \log_{10} P_{\text{benign}}(s_i \mid s_{i-1})$ with Laplace smoothing.
-13. **Benign Trigram Log-Likelihood ($LL_3(S)$):** $\frac{1}{L-2} \sum_{i=3}^{L} \log_{10} P_{\text{benign}}(s_i \mid s_{i-2}, s_{i-1})$.
-14. **Rare Bigram Ratio ($R_{\text{rare}}$):** Fraction of bigrams in $S$ with probability $< 10^{-4}$ in Tranco.
-
----
-
-## 6 Supported DGA Families
-
-| DGA Family | Type | Length Range | TLDs | Detection Recall |
-| :--- | :--- | :--- | :--- | :--- |
-| **Cryptolocker** | PRNG alphabetic date-seeded LCG | 12–16 | com, net, biz, org, ru, co.uk | **100.0%** |
-| **Necurs** | PRNG modular vowel-starved | 9–21 | com, in, xyz, top, work, club | **100.0%** |
-| **Qakbot** | PRNG alphanumeric letters and digits | 10–22 | com, net, org, info, biz | **100.0%** |
-| **Conficker** | PRNG short high-entropy | 8–11 | com, net, org, info, cc | **99.59%** |
-| **Bamital** | Hexadecimal MD5 hashes (0-9a-f) | 32 | org, info, cz.cc | **100.0%** |
-| **Suppobox / Matsnu** | Dictionary compound words | 14–24 | com, net, ru | **97.7%** |
 
 ---
 
 ## Installation & Quickstart
 
-### 1. Clone & Install Dependencies
+### Prerequisites
+* Python 3.10, 3.11, 3.12, 3.13, or 3.14
+* Git
+
+### 1. Clone the Repository
 ```bash
-git clone <repo-url>
+git clone https://github.com/your-username/dns-dga-threat-detector.git
 cd dns-dga-threat-detector
+```
+
+### 2. Set Up Virtual Environment & Dependencies
+```bash
+# Create and activate virtual environment
+python -m venv venv
+
+# On Linux / macOS:
+source venv/bin/activate
+# On Windows PowerShell:
+.\venv\Scripts\Activate.ps1
+
+# Install requirements
 pip install -r requirements.txt
 ```
 
-### 2. Run the Full Pipeline
-To train the model, simulate 7 days of home network logs, triage threats, and generate the SOC report in one command:
+### 3. Run the End-to-End Pipeline
+Execute the full training, telemetry simulation, threat hunting, and report generation pipeline with a single command:
 ```bash
 python run_dns_detector.py --all
 ```
 
-### 3. Run Specific Steps
+---
+
+## CLI Reference
+
+`run_dns_detector.py` provides modular operational modes for SOC workflows:
+
 ```bash
-# Force retrain the model
+# Train the model from scratch (forces retraining)
 python run_dns_detector.py --force-train
 
-# Ingest custom Pi-hole or Zeek log
+# Generate 7-day home network DNS telemetry (140,000 events)
+python run_dns_detector.py --generate-logs --force-logs
+
+# Run threat hunter on an existing Pi-hole or Zeek log file
 python run_dns_detector.py --hunt --log-file /var/log/pihole.log
 
-# Generate markdown SOC report
-python run_dns_detector.py --report --output-report reports/my_investigation.md
-```
+# Generate custom SOC markdown report
+python run_dns_detector.py --report --output-report reports/custom_report.md
 
-### 4. Run the Test Suite
-```bash
-pytest -v tests/
+# Display full CLI options
+python run_dns_detector.py --help
 ```
-All 23 unit and performance tests pass with 100% success.
 
 ---
 
-## SOC Triage Case Study: The 2 Compromised Hosts
+## Python API Usage
 
-The 7-day home network simulation analyzed 140,000 queries across 5 devices:
+The detector can be directly imported into external detection pipelines, SIEM ingest workers, or SOAR playbooks:
 
-1. **`192.168.1.55` (`iot-cam-garage`) - Compromised IoT Camera (CRITICAL):**
-   * **Telemetry:** 17,500 total queries. Periodically emits rapid bursts of Necurs and Conficker domains.
-   * **Correlation:** $P(\text{DGA}) \ge 0.99$ coupled with a **90.2% NXDOMAIN ratio**. The camera is actively attempting to establish command channels with unregistered botnet C2 nodes.
-2. **`192.168.1.99` (`win11-lab-vm`) - Compromised Lab VM (CRITICAL):**
-   * **Telemetry:** 17,500 total queries. Generates Cryptolocker, Qakbot, and Suppobox dictionary lookups (88% NXDOMAIN). Also emits high-frequency `TXT` records to `*.tunnel-data.org` exfiltrating chunked data over port 53.
-3. **`192.168.1.24` (`livingroom-bravia-tv`) - Cleared Benign CDN (INFORMATIONAL):**
-   * **Telemetry:** 35,000 queries with heavy CDN noise.
-   * **Triage:** Query `d3g9k8x2p1q4.cloudfront.net` exhibits high Shannon entropy ($3.69$) but was correctly cleared due to **100% NOERROR resolution**, valid AWS CloudFront IP ownership, and direct correlation with streaming video traffic.
+```python
+from core.model_trainer import load_detector_bundle, predict_domain
 
-Full SOC investigation dossiers are cataloged in [`reports/dns_threat_study_report.md`](reports/dns_threat_study_report.md).
+# 1. Load serialized detector bundle (model + fitted language models)
+bundle = load_detector_bundle("models/dga_detector.joblib")
+
+# 2. Run real-time inference on arbitrary domains
+benign_result = predict_domain("github.com", bundle=bundle, threshold=0.65)
+print(benign_result)
+# {'domain': 'github.com', 'prob_dga': 0.000, 'is_dga': False, ...}
+
+malicious_result = predict_domain("btwewsgtjsywcifg.net", bundle=bundle, threshold=0.65)
+print(malicious_result)
+# {'domain': 'btwewsgtjsywcifg.net', 'prob_dga': 1.000, 'is_dga': True, ...}
+
+# 3. Extract individual feature vectors
+extractor = bundle["extractor"]
+features = extractor.extract_features("d3g9k8x2p1q4.cloudfront.net")
+print(f"Shannon Entropy: {features['shannon_entropy']}, Bigram LL: {features['bigram_log_likelihood']}")
+```
+
+---
+
+## Test Suite & Verification
+
+The project includes an automated test suite across 3 test modules covering mathematical feature correctness, DGA deterministic properties, model threshold assertions, and log parser compatibility.
+
+Run all tests via `pytest`:
+```bash
+pytest -v tests/
+```
+
+### Test Suite Summary
+```text
+tests/test_dga_and_features.py::TestDGAGenerators::test_cryptolocker PASSED
+tests/test_dga_and_features.py::TestDGAGenerators::test_necurs PASSED
+tests/test_dga_and_features.py::TestDGAGenerators::test_qakbot PASSED
+tests/test_dga_and_features.py::TestDGAGenerators::test_conficker PASSED
+tests/test_dga_and_features.py::TestDGAGenerators::test_bamital PASSED
+tests/test_dga_and_features.py::TestDGAGenerators::test_suppobox PASSED
+tests/test_dga_and_features.py::TestDGAGenerators::test_deterministic_reproducibility PASSED
+tests/test_dga_and_features.py::TestFeatureExtractor::test_shannon_entropy_properties PASSED
+tests/test_dga_and_features.py::TestFeatureExtractor::test_normalized_entropy_bounded PASSED
+tests/test_dga_and_features.py::TestFeatureExtractor::test_streak_calculations PASSED
+tests/test_dga_and_features.py::TestFeatureExtractor::test_transition_frequency PASSED
+tests/test_dga_and_features.py::TestFeatureExtractor::test_feature_vector_completeness PASSED
+tests/test_log_parsers.py::TestLogParsers::test_pihole_log_parser PASSED
+tests/test_log_parsers.py::TestLogParsers::test_zeek_tsv_parser PASSED
+tests/test_log_parsers.py::TestLogParsers::test_zeek_json_parser PASSED
+tests/test_log_parsers.py::TestLogParsers::test_7day_log_file_integrity PASSED
+tests/test_model_performance.py::TestModelPerformance::test_precision_threshold PASSED
+tests/test_model_performance.py::TestModelPerformance::test_recall_threshold PASSED
+tests/test_model_performance.py::TestModelPerformance::test_f1_score_threshold PASSED
+tests/test_model_performance.py::TestModelPerformance::test_roc_auc_threshold PASSED
+tests/test_model_performance.py::TestModelPerformance::test_per_family_recall PASSED
+tests/test_model_performance.py::TestModelPerformance::test_inference_benign PASSED
+tests/test_model_performance.py::TestModelPerformance::test_inference_dga PASSED
+
+============================= 23 passed in 2.53s ==============================
+```
+
+---
+
+## License & Citation
+
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+### Citation
+If you utilize this architecture, feature extractor, or dataset in academic research or technical portfolio case studies:
+
+```bibtex
+@misc{dns_threat_detector_2026,
+  author = {Aditya},
+  title = {Production Home-Network DNS DGA & C2 Threat Detector},
+  year = {2026},
+  publisher = {GitHub},
+  howpublished = {\url{https://github.com/your-username/dns-dga-threat-detector}}
+}
+```

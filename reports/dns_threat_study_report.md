@@ -1,7 +1,7 @@
 # Production SOC Investigation Report: Home-Network DNS Threat Detector
 
 **Case File:** SOC-DNS-2026-001  
-**Investigation Date:** 2026-10-22 21:26:47 UTC  
+**Investigation Date:** 2026-10-22 21:30:00 UTC  
 **Monitoring Duration:** 7 Days  
 **Total Ingested Telemetry:** 140,000 DNS Queries  
 **Flagged Anomalies Investigated:** 18 Domains  
