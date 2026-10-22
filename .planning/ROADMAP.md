@@ -6,7 +6,7 @@ Build, train, evaluate, and deploy a production-grade DNS DGA and C2 Threat Dete
 
 ## Phases
 
-- [ ] **Phase 1: Environment Setup & Configuration** - Establish directory layout, `requirements.txt`, and `config/detector_config.yaml`.
+- [x] **Phase 1: Environment Setup & Configuration** - Establish directory layout, `requirements.txt`, and `config/detector_config.yaml`.
 - [ ] **Phase 2: DGA Generators & Tranco Corpus Builder** - Implement 6 DGA algorithms and synthesize 30,000 labeled domains.
 - [ ] **Phase 3: Lexical & Information-Theoretic Feature Extractor** - Implement 14 mathematical features and offline `tldextract` engine.
 - [ ] **Phase 4: ML Classifier Training & Evaluation Pipeline** - Train Random Forest model, compute cross-validation metrics, serialize to `models/dga_detector.joblib`.
@@ -26,7 +26,7 @@ Build, train, evaluate, and deploy a production-grade DNS DGA and C2 Threat Dete
 **Plans**: 1 plan
 
 Plans:
-- [ ] 01-01: Create workspace directory tree, `requirements.txt`, and `config/detector_config.yaml`.
+- [x] 01-01: Create workspace directory tree, `requirements.txt`, and `config/detector_config.yaml`.
 
 ### Phase 2: DGA Generators & Tranco Corpus Builder
 **Goal**: Implement authentic DGA family generators and produce 30,000 balanced domains.
@@ -99,7 +99,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Environment Setup & Configuration | 0/1 | Not started | - |
+| 1. Environment Setup & Configuration | 1/1 | Complete | 2026-10-23 |
 | 2. DGA Generators & Tranco Corpus Builder | 0/1 | Not started | - |
 | 3. Lexical & Information-Theoretic Feature Extractor | 0/1 | Not started | - |
 | 4. ML Classifier Training & Evaluation Pipeline | 0/1 | Not started | - |
