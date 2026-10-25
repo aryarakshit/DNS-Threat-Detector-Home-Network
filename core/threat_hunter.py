@@ -342,7 +342,7 @@ def generate_soc_investigation_report(
 **Monitoring Duration:** {monitored_days} Days  
 **Total Ingested Telemetry:** {total_queries:,} DNS Queries  
 **Flagged Anomalies Investigated:** {z_count} Domains  
-**Lead Detection Engineer / SOC Analyst:** Aditya / Autonomous SOC AI Agent  
+**Lead Detection Engineer / SOC Analyst:** Arya Rakshit / Autonomous SOC AI Agent  
 
 ---
 

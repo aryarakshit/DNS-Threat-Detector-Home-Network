@@ -1,11 +1,11 @@
 # Production SOC Investigation Report: Home-Network DNS Threat Detector
 
 **Case File:** SOC-DNS-2026-001  
-**Investigation Date:** 2026-10-25 06:53:18 UTC  
+**Investigation Date:** 2026-10-25 07:03:37 UTC  
 **Monitoring Duration:** 7 Days  
 **Total Ingested Telemetry:** 140,000 DNS Queries  
 **Flagged Anomalies Investigated:** 18 Domains  
-**Lead Detection Engineer / SOC Analyst:** Aditya / Autonomous SOC AI Agent  
+**Lead Detection Engineer / SOC Analyst:** Arya Rakshit / Autonomous SOC AI Agent  
 
 ---
 
