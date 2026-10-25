@@ -305,8 +305,8 @@ dns-dga-threat-detector/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/aryarakshit/-DNS-Threat-Detector-Home-Network.git
-cd -DNS-Threat-Detector-Home-Network
+git clone https://github.com/aryarakshit/DNS-Threat-Detector-Home-Network.git
+cd DNS-Threat-Detector-Home-Network
 ```
 
 ### 2. Set Up Virtual Environment & Dependencies
@@ -436,6 +436,6 @@ If you utilize this architecture, feature extractor, or dataset in academic rese
   title = {Production Home-Network DNS DGA & C2 Threat Detector},
   year = {2026},
   publisher = {GitHub},
-  howpublished = {\url{https://github.com/aryarakshit/-DNS-Threat-Detector-Home-Network}}
+  howpublished = {\url{https://github.com/aryarakshit/DNS-Threat-Detector-Home-Network}}
 }
 ```
