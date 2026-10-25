@@ -407,6 +407,8 @@ tests/test_dga_and_features.py::TestFeatureExtractor::test_feature_vector_comple
 tests/test_log_parsers.py::TestLogParsers::test_pihole_log_parser PASSED
 tests/test_log_parsers.py::TestLogParsers::test_zeek_tsv_parser PASSED
 tests/test_log_parsers.py::TestLogParsers::test_zeek_json_parser PASSED
+tests/test_log_parsers.py::TestLogParsers::test_load_auto_detects_and_normalizes_each_format PASSED
+tests/test_log_parsers.py::TestLogParsers::test_hunter_triages_a_real_pihole_log PASSED
 tests/test_log_parsers.py::TestLogParsers::test_7day_log_file_integrity PASSED
 tests/test_model_performance.py::TestModelPerformance::test_precision_threshold PASSED
 tests/test_model_performance.py::TestModelPerformance::test_recall_threshold PASSED
@@ -416,7 +418,7 @@ tests/test_model_performance.py::TestModelPerformance::test_per_family_recall PA
 tests/test_model_performance.py::TestModelPerformance::test_inference_benign PASSED
 tests/test_model_performance.py::TestModelPerformance::test_inference_dga PASSED
 
-============================= 23 passed in 2.53s ==============================
+============================= 25 passed in 2.48s ==============================
 ```
 
 ---
@@ -430,7 +432,7 @@ If you utilize this architecture, feature extractor, or dataset in academic rese
 
 ```bibtex
 @misc{dns_threat_detector_2026,
-  author = {Aditya},
+  author = {Arya Rakshit},
   title = {Production Home-Network DNS DGA & C2 Threat Detector},
   year = {2026},
   publisher = {GitHub},
