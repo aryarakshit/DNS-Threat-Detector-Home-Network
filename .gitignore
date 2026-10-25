@@ -26,11 +26,13 @@ wheels/
 
 # Testing
 .pytest_cache/
+.benchmarks/
 .coverage
 htmlcov/
 
 # GSD Runtime local tooling
 .agents/
+.planning/
 
 # Logs and databases (generated data)
 # Note: we track sample files in data/ and models/ when built

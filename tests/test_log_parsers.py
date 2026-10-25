@@ -87,6 +87,64 @@ class TestLogParsers:
         finally:
             Path(tmp_path).unlink(missing_ok=True)
 
+    def test_load_auto_detects_and_normalizes_each_format(self):
+        """load_auto routes Pi-hole, Zeek and native JSONL to one normalized schema."""
+        pihole = (
+            "Oct 18 14:22:01 dnsmasq[1234]: query[A] benign-site.com from 192.168.1.10\n"
+            "Oct 18 14:22:01 dnsmasq[1234]: reply benign-site.com is 93.184.216.34\n"
+        )
+        zeek_tsv = (
+            "#fields\tts\tid.orig_h\tquery\tqtype_name\trcode_name\tanswers\n"
+            "1697638921.12\t192.168.1.99\texample.net\tA\tNXDOMAIN\t-\n"
+        )
+        native = '{"timestamp": "2026-10-18T00:00:00Z", "client_ip": "192.168.1.5", "device_name": "pixel", "query": "google.com", "qtype": "A", "rcode": "NOERROR", "answers": ["142.250.0.1"]}\n'
+
+        for content, expected_fmt, expected_query in (
+            (pihole, "pihole", "benign-site.com"),
+            (zeek_tsv, "zeek-tsv", "example.net"),
+            (native, "jsonl", "google.com"),
+        ):
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".log") as f:
+                f.write(content)
+                tmp_path = f.name
+            try:
+                events, fmt = DNSLogParser.load_auto(tmp_path)
+                assert fmt == expected_fmt, f"{expected_fmt}: detected {fmt}"
+                assert events, f"{expected_fmt}: no events parsed"
+                assert events[0]["query"] == expected_query
+                # Every normalized event carries the keys the hunter reads
+                assert {"query", "rcode", "client_ip"} <= set(events[0])
+            finally:
+                Path(tmp_path).unlink(missing_ok=True)
+
+    def test_hunter_triages_a_real_pihole_log(self):
+        """A Pi-hole text log flows end to end and yields per-domain dossiers (not zero)."""
+        from core.threat_hunter import DNSThreatHunter
+
+        lines = ["Oct 18 14:22:01 dnsmasq[1234]: query[A] google.com from 192.168.1.10\n"]
+        # A burst of NXDOMAIN lookups to a single odd domain, the shape DGA triage targets
+        for i in range(12):
+            lines.append(
+                f"Oct 18 14:22:{10 + i:02d} dnsmasq[1234]: query[A] kq3x9z7w2m{i}.biz from 192.168.1.55\n"
+            )
+            lines.append(
+                f"Oct 18 14:22:{10 + i:02d} dnsmasq[1234]: reply kq3x9z7w2m{i}.biz is NXDOMAIN\n"
+            )
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", delete=False, suffix=".log") as f:
+            f.writelines(lines)
+            tmp_path = f.name
+
+        try:
+            hunter = DNSThreatHunter()
+            dossiers = hunter.process_log_stream(log_file=tmp_path)
+            # google.com is fast-path benign; the odd domains must surface as candidates
+            assert isinstance(dossiers, list)
+            assert any("kq3x9z7w2m" in d["domain"] for d in dossiers), (
+                "Real Pi-hole log produced no triage candidates"
+            )
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+
     def test_7day_log_file_integrity(self):
         log_file = PROJECT_ROOT / "data" / "home_dns_7days.jsonl"
         assert log_file.is_file(), "Simulated 7-day log missing. Run log_parsers.py first."

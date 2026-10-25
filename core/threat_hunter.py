@@ -23,6 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from config import load_config
 from core.feature_extractor import DomainFeatureExtractor, FEATURE_NAMES
+from core.log_parsers import DNSLogParser
 from core.model_trainer import load_detector_bundle, predict_domain
 
 
@@ -103,53 +104,50 @@ class DNSThreatHunter:
             "last_seen": "0000-00-00",
         })
 
+        events, fmt = DNSLogParser.load_auto(path)
+        print(f"Detected log format: {fmt}")
         total_lines = 0
-        with open(path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                total_lines += 1
-                try:
-                    ev = json.loads(line)
-                except Exception:
-                    continue
+        for ev in events:
+            total_lines += 1
 
-                q = ev.get("query", "").strip().lower().rstrip(".")
-                if not q:
-                    continue
+            q = ev.get("query", "").strip().lower().rstrip(".")
+            if not q:
+                continue
 
-                entry = domain_telemetry[q]
-                entry["query"] = q
-                entry["total_queries"] += 1
-                if ev.get("rcode") == "NXDOMAIN":
-                    entry["nxdomain_count"] += 1
-                else:
-                    entry["noerror_count"] += 1
+            entry = domain_telemetry[q]
+            entry["query"] = q
+            entry["total_queries"] += 1
+            if ev.get("rcode") == "NXDOMAIN":
+                entry["nxdomain_count"] += 1
+            else:
+                entry["noerror_count"] += 1
 
-                cip = ev.get("client_ip", "0.0.0.0")
-                entry["source_ips"].add(cip)
-                dev_name = ev.get("device_name")
-                if dev_name:
-                    entry["source_devices"].add(dev_name)
+            cip = ev.get("client_ip", "0.0.0.0")
+            entry["source_ips"].add(cip)
+            dev_name = ev.get("device_name")
+            if dev_name:
+                entry["source_devices"].add(dev_name)
 
-                qtype = ev.get("qtype")
-                if qtype:
-                    entry["qtypes"].add(qtype)
+            qtype = ev.get("qtype")
+            if qtype:
+                entry["qtypes"].add(qtype)
 
-                ans = ev.get("answers", [])
-                if isinstance(ans, list):
-                    for a in ans:
-                        entry["answers"].add(str(a))
+            ans = ev.get("answers", [])
+            if isinstance(ans, list):
+                for a in ans:
+                    entry["answers"].add(str(a))
 
-                ts = ev.get("timestamp", "")
-                if ts:
-                    if ts < entry["first_seen"]:
-                        entry["first_seen"] = ts
-                    if ts > entry["last_seen"]:
-                        entry["last_seen"] = ts
+            ts = ev.get("timestamp", "")
+            if ts:
+                if ts < entry["first_seen"]:
+                    entry["first_seen"] = ts
+                if ts > entry["last_seen"]:
+                    entry["last_seen"] = ts
 
         print(f"Processed {total_lines} total queries across {len(domain_telemetry)} unique domains.")
+        # Expose actual counts so callers report the real log, not the simulator's 140k
+        self.last_total_queries = total_lines
+        self.last_unique_domains = len(domain_telemetry)
 
         # Filter out fast-path benign domains
         candidates: List[Dict[str, Any]] = []

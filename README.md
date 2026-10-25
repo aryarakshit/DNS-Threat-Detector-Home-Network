@@ -3,13 +3,16 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.14-3776AB.svg?style=flat-square&logo=python&logoColor=white" alt="Python Versions" />
   <img src="https://img.shields.io/badge/scikit--learn-1.4+-F7931E.svg?style=flat-square&logo=scikit-learn&logoColor=white" alt="scikit-learn" />
-  <img src="https://img.shields.io/badge/Tests-23%20Passed-2EA44F.svg?style=flat-square&logo=pytest&logoColor=white" alt="Pytest Status" />
-  <img src="https://img.shields.io/badge/Precision-99.77%25-brightgreen.svg?style=flat-square" alt="Precision" />
-  <img src="https://img.shields.io/badge/Recall-99.53%25-brightgreen.svg?style=flat-square" alt="Recall" />
-  <img src="https://img.shields.io/badge/ROC--AUC-0.9999-blue.svg?style=flat-square" alt="ROC-AUC" />
+  <img src="https://img.shields.io/badge/Tests-25%20Passed-2EA44F.svg?style=flat-square&logo=pytest&logoColor=white" alt="Pytest Status" />
+  <img src="https://img.shields.io/badge/Eval-synthetic%20data-orange.svg?style=flat-square" alt="Evaluation on synthetic data" />
   <img src="https://img.shields.io/badge/Telemetry-Pi--hole%20%2F%20Zeek-blueviolet.svg?style=flat-square" alt="Telemetry Support" />
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square" alt="License" />
 </p>
+
+---
+
+> [!IMPORTANT]
+> **Evaluation status: synthetic data.** The reported precision/recall (99.77% / 99.53%) are measured on a **held-out split of this project's own generated data** — benign domains synthesized by `core/dga_generators.py` (not the real Tranco Top-1M list) and DGA domains from deterministic re-implementations of six families. The classifier is tested against the same generators it was trained on, so these figures measure fit to those generators, **not** performance on real-world traffic, where scores will be lower. The 140,000-query "home network" log is also simulated (one device is even named `aditya-workstation`). To get real numbers, follow [Validating on real data](#validating-on-real-data). The detector does ingest **real** Pi-hole/Zeek logs (see that section); only the bundled benchmark is synthetic.
 
 ---
 
@@ -25,14 +28,34 @@ The **Home-Network DNS DGA & C2 Threat Detector** solves this operational challe
 
 ---
 
-## Key Highlights & SOC Portfolio Bullet
+## Key Highlights
 
-> **"Engineered hybrid Info-Theoretic (Shannon entropy, n-gram log-likelihood) and scikit-learn Random Forest DNS classifier achieving 99.77% precision and 99.53% recall across 6 DGA families; processed 140,000 queries across 7-day Pi-hole/Zeek telemetry to triage 18 anomalous domains, eliminating CDN false positives via NXDOMAIN burst correlation and uncovering 2 compromised LAN hosts."**
+* **Hybrid detection design:** 14 lexical / information-theoretic features (Shannon entropy, metric entropy, Laplace-smoothed n-gram log-likelihood, rare-bigram ratios) feed a scikit-learn Random Forest, backed by a behavioral NXDOMAIN-burst and query-velocity correlator.
+* **Benchmark (synthetic, see note above):** 99.77% precision / 99.53% recall / 0.99989 ROC-AUC on a held-out split of the generated 30,000-domain corpus. In-distribution against the project's own generators; not a real-world figure.
+* **Anti-leakage within the split:** empirical n-gram language models and rare-bigram frequencies are fitted on the training fold only. (This prevents train/test leakage; it does not make the generated data representative of real traffic.)
+* **Offline operation:** the pipeline runs with no external network calls, using an offline `tldextract` snapshot.
+* **Real multi-format ingestion:** `core/log_parsers.py` parses **Pi-hole** (`dnsmasq` text and `pihole-FTL.db` SQLite) and **Zeek** (`dns.log` TSV and JSON), auto-detected by `load_auto()`; the hunter runs on these the same as on the bundled simulator.
 
-* **High-Assurance ML:** **99.77% Precision**, **99.53% Recall**, and **0.99989 ROC-AUC** on held-out evaluation datasets.
-* **Strict Anti-Leakage Protocol:** Empirical language models (bigrams/trigrams) and rare bigram frequencies are fitted *exclusively* on the training fold before test-set transformation.
-* **Offline Operation:** The entire pipeline operates completely offline with zero external network dependencies via offline `tldextract` snapshot parsing.
-* **Turnkey Multi-Format Ingestion:** Directly ingests live or historical **Pi-hole** (`dnsmasq` text logs and `pihole-FTL.db` SQLite) and **Zeek** (`dns.log` TSV and JSON lines), while bundling a deterministic 7-day 140,000-query home network telemetry simulator.
+> A résumé bullet for this project should state the synthetic-benchmark caveat and, ideally, be replaced with numbers from a real-data run (next section).
+
+---
+
+## Validating on Real Data
+
+The bundled numbers are synthetic. To produce real ones:
+
+1. **Real benign corpus:** download the current [Tranco list](https://tranco-list.eu/) and save it as `data/tranco_benign_sample.csv` (the loader in `core/dga_generators.py` uses a real CSV when present instead of synthesizing one).
+2. **Real malicious domains:** pull a labeled DGA feed (e.g. DGArchive, or Netlab 360 OSINT DGA feeds) rather than the deterministic generators, and hold out **entire families** from training so recall is measured on families the model never saw.
+3. **Retrain and re-evaluate:** `python run_dns_detector.py --force-train`, then read the real precision/recall from `models/evaluation_metrics.json`.
+4. **Hunt real traffic:** point the detector at your own Pi-hole or Zeek logs:
+
+```bash
+python run_dns_detector.py --hunt --log-file /var/log/pihole/pihole.log
+python run_dns_detector.py --hunt --log-file /opt/zeek/logs/current/dns.log
+python run_dns_detector.py --hunt --log-file /etc/pihole/pihole-FTL.db
+```
+
+The format is auto-detected (`DNSLogParser.load_auto`); the hunter prints which format it found.
 
 ---
 
@@ -282,7 +305,7 @@ dns-dga-threat-detector/
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/your-username/dns-dga-threat-detector.git
+git clone https://github.com/aryarakshit/dns-dga-threat-detector.git
 cd dns-dga-threat-detector
 ```
 
@@ -411,6 +434,6 @@ If you utilize this architecture, feature extractor, or dataset in academic rese
   title = {Production Home-Network DNS DGA & C2 Threat Detector},
   year = {2026},
   publisher = {GitHub},
-  howpublished = {\url{https://github.com/your-username/dns-dga-threat-detector}}
+  howpublished = {\url{https://github.com/aryarakshit/dns-dga-threat-detector}}
 }
 ```

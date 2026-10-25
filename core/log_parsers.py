@@ -221,6 +221,69 @@ class DNSLogParser:
 
         return events
 
+    @staticmethod
+    def detect_format(path: str | Path) -> str:
+        """Sniff a DNS log's format: 'sqlite', 'pihole', 'zeek-tsv', 'zeek-json', or 'jsonl'.
+
+        'jsonl' is this project's own simulator schema (query/rcode/client_ip/...),
+        which the hunter already understands; the others route to a parser.
+        """
+        path = Path(path)
+        if path.suffix.lower() in (".db", ".sqlite", ".sqlite3"):
+            return "sqlite"
+        with open(path, "rb") as fb:
+            if fb.read(16).startswith(b"SQLite format 3"):
+                return "sqlite"
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            first = ""
+            for line in f:
+                if line.strip():
+                    first = line.strip()
+                    break
+        if not first:
+            return "jsonl"
+        if first.startswith("#separator") or first.startswith("#fields") or "\t" in first:
+            return "zeek-tsv"
+        if first.startswith("{"):
+            try:
+                obj = json.loads(first)
+            except json.JSONDecodeError:
+                return "jsonl"
+            if any(k in obj for k in ("id.orig_h", "qtype_name", "rcode_name")):
+                return "zeek-json"
+            return "jsonl"
+        if "dnsmasq[" in first or "query[" in first:
+            return "pihole"
+        return "jsonl"
+
+    @staticmethod
+    def load_auto(path: str | Path) -> Tuple[List[Dict[str, Any]], str]:
+        """Auto-detect the log format and return (events_as_dicts, format_name).
+
+        Every source is normalized to the hunter's event schema, so a real Pi-hole
+        or Zeek log produces the same per-domain telemetry as the bundled simulator.
+        """
+        fmt = DNSLogParser.detect_format(path)
+        if fmt == "sqlite":
+            return [e.to_dict() for e in DNSLogParser.parse_pihole_sqlite(path)], fmt
+        if fmt == "pihole":
+            return [e.to_dict() for e in DNSLogParser.parse_pihole_log(path)], fmt
+        if fmt in ("zeek-tsv", "zeek-json"):
+            return [e.to_dict() for e in DNSLogParser.parse_zeek_dns_log(path)], fmt
+
+        # Native simulator JSONL: already in the hunter's schema
+        events: List[Dict[str, Any]] = []
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    events.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        return events, fmt
+
 
 def generate_home_network_logs(
     output_path: Optional[str | Path] = None,

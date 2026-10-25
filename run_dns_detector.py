@@ -115,7 +115,7 @@ def step_hunt_and_report(
     rep = generate_soc_investigation_report(
         flagged_dossiers=dossiers,
         output_path=report_path,
-        total_queries=140000,
+        total_queries=getattr(hunter, "last_total_queries", 140000),
         monitored_days=7
     )
     console.print(f"[bold green][OK] Full SOC Report successfully generated at -> [bold underline]{rep}[/bold underline][/bold green]")
